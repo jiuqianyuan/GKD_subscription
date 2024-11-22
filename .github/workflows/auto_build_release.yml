@@ -2,7 +2,7 @@ name: auto_build_release
 
 on:
   schedule:
-    - cron: '40 1 * * *' # 每天凌晨1点执行
+    - cron: '50 1 * * *' # 每天凌晨1点执行
 
 jobs:
   check-changes:
@@ -34,7 +34,7 @@ jobs:
           # 获取昨天的日期
           yesterday=$(date -d "yesterday" +%Y-%m-%d)
           # 获取昨天的最新提交哈希值
-          yesterday_commit=$(git log --since="$yesterday 00:00" --until="$yesterday 23:59" --pretty=format:"%H" -1)
+          yesterday_commit=$(git log jiuqianyuan-patch-1 --since="$yesterday 00:00" --until="$yesterday 23:59" --pretty=format:"%H" -1)
           echo "Yesterday's commit hash: $yesterday_commit"
           echo "::set-output name=yesterday_commit::$yesterday_commit"
 
@@ -47,7 +47,7 @@ jobs:
             echo "::set-output name=has_changes::false"
           else
             # 检查 /src 目录是否有变动
-            changes=$(git diff --name-only $yesterday_commit HEAD -- /src)
+            changes=$(git diff jiuqianyuan-patch-1 --name-only $yesterday_commit HEAD -- /src)
             if [ -z "$changes" ]; then
               echo "No changes detected in /src"
               echo "::set-output name=has_changes::false"
