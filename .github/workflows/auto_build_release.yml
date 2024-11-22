@@ -1,9 +1,8 @@
 name: auto_build_release
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '0 1 * * *' # 每天凌晨1点执行
+    - cron: '40 1 * * *' # 每天凌晨1点执行
 
 jobs:
   check-changes:
@@ -85,7 +84,7 @@ jobs:
 
       - name: Git push
         if: ${{ steps.commit.outcome == 'success' }}
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@jiuqianyuan-patch-1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
