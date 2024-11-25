@@ -3,7 +3,7 @@ name: auto_build_release
 on:
   workflow_dispatch:
   schedule:
-    - cron: '55 11 * * *' # 每天凌晨1点40分执行
+    - cron: '20 12 * * *' # 每天凌晨1点40分执行
   push:
     branches:
       - master
@@ -59,7 +59,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - uses: pnpm/action-setup@v4
 
@@ -92,7 +92,7 @@ jobs:
 
       - name: Create Release
         if: ${{ steps.commit.outcome == 'success' }}
-        uses: actions/create-release@v1.6.1
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
