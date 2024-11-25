@@ -92,7 +92,7 @@ jobs:
 
       - name: Create Release
         if: ${{ steps.commit.outcome == 'success' }}
-        uses: ncipollo/release-action@master
+        uses: ncipollo/release-action@v1.14.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
