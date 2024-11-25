@@ -3,7 +3,7 @@ name: auto_build_release
 on:
   workflow_dispatch:
   schedule:
-    - cron: '02 10 * * *' # 每天凌晨1点40分执行
+    - cron: '05 10 * * *' # 每天凌晨1点40分执行
   push:
     branches:
       - master
@@ -28,11 +28,6 @@ jobs:
       - run: pnpm install
 
       - run: pnpm run build
-
-      - id: version
-        run: |
-          version=$(node -e "import('@gkd-kit/tools').then((m) => m.stdoutGkdVersion());")
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Get Latest Tag
         id: get_latest_tag
@@ -70,6 +65,7 @@ jobs:
         run: |
           version=$(node -e "import('@gkd-kit/tools').then((m) => m.stdoutGkdVersion());")
           echo "version=${version}" >> "$GITHUB_OUTPUT"
+
       - name: Git commit
         id: commit
         run: |
