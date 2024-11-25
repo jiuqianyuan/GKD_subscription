@@ -16,8 +16,6 @@ export default defineGkdApp({
       rules: [
         {
           key: 0,
-          activityIds:
-            'cmb.pb.app.h5container.webviewcontainer.PBWebContainerActivity',
           matches: '[id="cover-img"] + [text="关闭推荐"]',
           snapshotUrls: 'https://i.gkd.li/i/12706022',
         },
