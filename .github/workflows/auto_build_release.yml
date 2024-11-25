@@ -3,7 +3,7 @@ name: auto_build_release
 on:
   workflow_dispatch:
   schedule:
-    - cron: '58 9 * * *' # 每天凌晨1点40分执行
+    - cron: '02 10 * * *' # 每天凌晨1点40分执行
   push:
     branches:
       - master
@@ -66,23 +66,21 @@ jobs:
           echo "No changes detected. Exiting workflow."
           exit 0
 
-      - name: Determine Version
-        id: version
+      - id: version
         run: |
           version=$(node -e "import('@gkd-kit/tools').then((m) => m.stdoutGkdVersion());")
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-
-      - name: Git Commit
+      - name: Git commit
         id: commit
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          git config --local user.email github-actions[bot]@users.noreply.github.com
+          git config --local user.name github-actions[bot]
           git status
           git add .
-          git commit -a -m "chore: v${{ steps.version.outputs.version }}"
+          git commit -a -m "chore: v${{steps.version.outputs.version}}"
         continue-on-error: true
 
-      - name: Git Push
+      - name: Git push
         if: ${{ steps.commit.outcome == 'success' }}
         uses: ad-m/github-push-action@master
         with:
@@ -100,10 +98,10 @@ jobs:
           release_name: Release ${{ steps.version.outputs.version }}
           body_path: ./dist/CHANGELOG.md
 
-      - name: Publish Package
-        if: ${{ steps.commit.outcome == 'success' && secrets.NPM_TOKEN != '' }}
+      - name: Publish package
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: ${{ steps.commit.outcome == 'success' && env.NPM_TOKEN != '' }}
         run: |
           pnpm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
           node -e "import('@gkd-kit/tools').then((m) => m.updatePkgVersion());"
