@@ -3,13 +3,13 @@ name: auto_build_release
 on:
   workflow_dispatch:
   schedule:
-    - cron: '20 10 * * *' # 每天凌晨1点40分执行
+    - cron: '50 11 * * *' # 每天凌晨1点40分执行
   push:
     branches:
       - master
 
 jobs:
-  build_release:
+  auto_build_release:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -42,7 +42,7 @@ jobs:
           latest_tag=${{ steps.get_latest_tag.outputs.latest_tag }}
           if [ -z "$latest_tag" ]; then
             echo "No tags found."
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
           else
             changes=$(git diff --name-only $latest_tag HEAD -- ./src)
             if [ -z "$changes" ]; then
@@ -86,7 +86,7 @@ jobs:
 
       - name: Create Release
         if: ${{ steps.commit.outcome == 'success' }}
-        uses: actions/create-release@v1
+        uses: ncipollo/release-action@v1.14.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
