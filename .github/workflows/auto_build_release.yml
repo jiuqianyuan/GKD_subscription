@@ -3,31 +3,21 @@ name: auto_build_release
 on:
   workflow_dispatch:
   schedule:
-    - cron: '50 11 * * *' # 每天凌晨1点40分执行
+    - cron: '55 11 * * *' # 每天凌晨1点40分执行
   push:
     branches:
       - master
 
 jobs:
-  auto_build_release:
+  check_changes:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
+      has_changes: ${{ steps.check_changes.outputs.has_changes }}
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - uses: pnpm/action-setup@v4
-
-      - run: pnpm install
-
-      - run: pnpm run build
 
       - name: Get Latest Tag
         id: get_latest_tag
@@ -55,11 +45,27 @@ jobs:
             fi
           fi
 
-      - name: Exit if No Changes
-        if: steps.check_changes.outputs.has_changes == 'false'
-        run: |
-          echo "No changes detected. Exiting workflow."
-          exit 0
+  auto_build_release:
+    needs: check_changes
+    runs-on: ubuntu-latest
+    if: needs.check_changes.outputs.has_changes == 'true'
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@v4
+
+      - run: pnpm install
+
+      - run: pnpm run build
 
       - id: version
         run: |
@@ -86,7 +92,7 @@ jobs:
 
       - name: Create Release
         if: ${{ steps.commit.outcome == 'success' }}
-        uses: ncipollo/release-action@v1.14.0
+        uses: actions/create-release@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
