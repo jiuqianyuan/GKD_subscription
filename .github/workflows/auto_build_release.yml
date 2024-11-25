@@ -2,7 +2,7 @@ name: auto_build_release
 
 on:
   schedule:
-    - cron: '50 1 * * *' # 每天凌晨1点执行
+    - cron: '50 9 * * *' # 每天凌晨1点40分执行
 
 jobs:
   check-changes:
@@ -25,34 +25,32 @@ jobs:
 
       - run: pnpm run build
 
-      - name: Fetch All History
-        run: git fetch --prune --unshallow
-
-      - name: Get Yesterday's Commit Hash
-        id: get_yesterday_hash
+      - id: version
         run: |
-          # 获取昨天的日期
-          yesterday=$(date -d "yesterday" +%Y-%m-%d)
-          # 获取昨天的最新提交哈希值
-          yesterday_commit=$(git log jiuqianyuan-patch-1 --since="$yesterday 00:00" --until="$yesterday 23:59" --pretty=format:"%H" -1)
-          echo "Yesterday's commit hash: $yesterday_commit"
-          echo "::set-output name=yesterday_commit::$yesterday_commit"
+          version=$(node -e "import('@gkd-kit/tools').then((m) => m.stdoutGkdVersion());")
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - name: Get Latest Tag
+        id: get_latest_tag
+        run: |
+          latest_tag=$(git describe --tags --abbrev=0)
+          echo "Latest tag: $latest_tag"
+          echo "::set-output name=latest_tag::$latest_tag"
 
       - name: Check for Changes
         id: check_changes
         run: |
-          yesterday_commit=${{ steps.get_yesterday_hash.outputs.yesterday_commit }}
-          if [ -z "$yesterday_commit" ]; then
-            echo "No commits found for yesterday."
+          latest_tag=${{ steps.get_latest_tag.outputs.latest_tag }}
+          if [ -z "$latest_tag" ]; then
+            echo "No tags found."
             echo "::set-output name=has_changes::false"
           else
-            # 检查 /src 目录是否有变动
-            changes=$(git diff jiuqianyuan-patch-1 --name-only $yesterday_commit HEAD -- /src)
+            changes=$(git diff --name-only $latest_tag HEAD -- ./src)
             if [ -z "$changes" ]; then
-              echo "No changes detected in /src"
+              echo "No changes detected in ./src"
               echo "::set-output name=has_changes::false"
             else
-              echo "Changes detected in /src:"
+              echo "Changes detected in ./src:"
               echo "$changes"
               echo "::set-output name=has_changes::true"
             fi
@@ -64,27 +62,25 @@ jobs:
           echo "No changes detected. Exiting workflow."
           exit 0
 
-      - name: Notify on Changes
-        if: steps.check_changes.outputs.has_changes == 'true'
-
-      - id: version
+      - name: Determine Version
+        id: version
         run: |
           version=$(node -e "import('@gkd-kit/tools').then((m) => m.stdoutGkdVersion());")
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
-      - name: Git commit
+      - name: Git Commit
         id: commit
         run: |
-          git config --local user.email github-actions[bot]@users.noreply.github.com
-          git config --local user.name github-actions[bot]
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           git status
           git add .
-          git commit -a -m "chore: v${{steps.version.outputs.version}}"
+          git commit -a -m "chore: v${{ steps.version.outputs.version }}"
         continue-on-error: true
 
-      - name: Git push
+      - name: Git Push
         if: ${{ steps.commit.outcome == 'success' }}
-        uses: ad-m/github-push-action@jiuqianyuan-patch-1
+        uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
@@ -100,10 +96,10 @@ jobs:
           release_name: Release ${{ steps.version.outputs.version }}
           body_path: ./dist/CHANGELOG.md
 
-      - name: Publish package
+      - name: Publish Package
+        if: ${{ steps.commit.outcome == 'success' && secrets.NPM_TOKEN != '' }}
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        if: ${{ steps.commit.outcome == 'success' && env.NPM_TOKEN != '' }}
         run: |
           pnpm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
           node -e "import('@gkd-kit/tools').then((m) => m.updatePkgVersion());"
