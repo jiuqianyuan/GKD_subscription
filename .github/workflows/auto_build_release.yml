@@ -3,7 +3,7 @@ name: auto_build_release
 on:
   workflow_dispatch:
   schedule:
-    - cron: '05 10 * * *' # 每天凌晨1点40分执行
+    - cron: '10 10 * * *' # 每天凌晨1点40分执行
   push:
     branches:
       - master
@@ -34,7 +34,7 @@ jobs:
         run: |
           latest_tag=$(git describe --tags --abbrev=0)
           echo "Latest tag: $latest_tag"
-          echo "::set-output name=latest_tag::$latest_tag"
+          echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
 
       - name: Check for Changes
         id: check_changes
@@ -42,16 +42,16 @@ jobs:
           latest_tag=${{ steps.get_latest_tag.outputs.latest_tag }}
           if [ -z "$latest_tag" ]; then
             echo "No tags found."
-            echo "::set-output name=has_changes::false"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
           else
-            changes=$(git diff --name-only $latest_tag HEAD -- ./src)
+            changes=$(git diff --name-only $latest_tag HEAD -- /src)
             if [ -z "$changes" ]; then
-              echo "No changes detected in ./src"
-              echo "::set-output name=has_changes::false"
+              echo "No changes detected in /src"
+              echo "has_changes=false" >> $GITHUB_OUTPUT
             else
-              echo "Changes detected in ./src:"
+              echo "Changes detected in /src:"
               echo "$changes"
-              echo "::set-output name=has_changes::true"
+              echo "has_changes=true" >> $GITHUB_OUTPUT
             fi
           fi
 
