@@ -1,8 +1,12 @@
 name: auto_build_release
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '50 9 * * *' # 每天凌晨1点40分执行
+    - cron: '58 9 * * *' # 每天凌晨1点40分执行
+  push:
+    branches:
+      - master
 
 jobs:
   check-changes:
